@@ -1,12 +1,12 @@
-import { TagBuilder } from "./core/builder";
-import { TagFactory } from "./core/factory";
 import { Observable } from "./core/observer";
+import { TagFactory } from "./core/factory";
+import { TagBuilder } from "./core/builder";
+import { PokemonGrid } from "./components/PokemonGrid";
+import { PokemonCounter } from "./components/PokemonCounter";
 
 type Pokemon = { id: number; name: string; sprite: string };
 
-const pokemonList = new Observable<Pokemon[]>([]);
-
-const INITIAL_POKEMONS: Pokemon[] = [
+const POKEMONS: Pokemon[] = [
   {
     id: 1,
     name: "Bulbizarre",
@@ -63,33 +63,11 @@ const INITIAL_POKEMONS: Pokemon[] = [
   },
 ];
 
-function buildCard(pokemon: Pokemon): HTMLElement {
-  return new TagBuilder("div")
-    .withClass("pokemon-card")
-    .withChild(
-      TagFactory.create("img", {
-        attrs: { src: pokemon.sprite, alt: pokemon.name },
-      }),
-    )
-    .withChild(TagFactory.create("h2", { text: pokemon.name }))
-    .withChild(
-      TagFactory.create("button", {
-        text: "Voir détail",
-        classes: ["btn-detail"],
-        events: { click: () => alert(`Pokémon : ${pokemon.name}`) },
-      }),
-    )
-    .build();
-}
-
-function renderGrid(pokemons: Pokemon[], grid: HTMLElement): void {
-  grid.innerHTML = "";
-  pokemons.forEach((pokemon) => grid.appendChild(buildCard(pokemon)));
-}
-
 export function initApp(root: HTMLElement): void {
-  const counter = TagFactory.create("p", { text: "0 Pokémon chargés" });
-  const grid = TagFactory.create("div", { classes: ["pokemon-grid"] });
+  const pokemonList = new Observable<Pokemon[]>([]);
+
+  const counter = new PokemonCounter(pokemonList);
+  const grid = new PokemonGrid(pokemonList);
 
   const btnAdd = new TagBuilder("button")
     .withText("Ajouter Évaporé")
@@ -111,15 +89,14 @@ export function initApp(root: HTMLElement): void {
     .withEvent("click", () => pokemonList.next([]))
     .build();
 
-  pokemonList.subscribe((pokemons) => renderGrid(pokemons, grid));
-  pokemonList.subscribe((pokemons) => {
-    counter.textContent = `${pokemons.length} Pokémon chargés`;
+  const controls = TagFactory.create("div", {
+    classes: ["controls"],
+    children: [btnAdd, btnReset],
   });
 
-  root.appendChild(counter);
-  root.appendChild(grid);
-  root.appendChild(btnAdd);
-  root.appendChild(btnReset);
+  counter.mount(root);
+  root.appendChild(controls);
+  grid.mount(root);
 
-  pokemonList.next(INITIAL_POKEMONS);
+  pokemonList.next(POKEMONS);
 }
