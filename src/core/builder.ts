@@ -1,35 +1,61 @@
-export class AppConfig {
-  private static instance?: AppConfig;
-  private appTitle: string;
-  private pageTitle: string;
+export class TagBuilder {
+  private element: HTMLElement;
+  private eventMap: Map<string, EventListener> = new Map();
 
-  private constructor(appTitle: string, pageTitle: string) {
-    this.appTitle = appTitle;
-    this.pageTitle = pageTitle;
+  constructor(tag: string) {
+    this.element = document.createElement(tag);
   }
 
-  private static getInstance(): AppConfig {
-    if (AppConfig.instance) {
-      return AppConfig.instance;
+  withText(text: string): this {
+    this.element.textContent = text;
+    return this;
+  }
+
+  withClass(className: string): this {
+    this.element.classList.add(className);
+    return this;
+  }
+
+  withStyle(property: string, value: string): this {
+    (this.element.style as unknown as Record<string, string>)[property] = value;
+    return this;
+  }
+
+  withAttr(name: string, value: string): this {
+    this.element.setAttribute(name, value);
+    return this;
+  }
+
+  withEvent(event: string, handler: EventListener): this {
+    const existing = this.eventMap.get(event);
+    if (existing) {
+      this.element.removeEventListener(event, existing);
     }
-
-    AppConfig.instance = new AppConfig("League Of Legends", "Home Page");
-    return AppConfig.instance;
+    this.eventMap.set(event, handler);
+    this.element.addEventListener(event, handler);
+    return this;
   }
 
-  public static setAppTitle(title: string): void {
-    AppConfig.getInstance().appTitle = title;
+  withChild(child: HTMLElement): this {
+    this.element.appendChild(child);
+    return this;
   }
 
-  public static setPageTitle(title: string): void {
-    AppConfig.getInstance().pageTitle = title;
+  withoutClass(className: string): this {
+    this.element.classList.remove(className);
+    return this;
   }
 
-  public static getAppTitle() {
-    return AppConfig.getInstance().appTitle;
+  withoutEvent(event: string): this {
+    const existing = this.eventMap.get(event);
+    if (existing) {
+      this.element.removeEventListener(event, existing);
+      this.eventMap.delete(event);
+    }
+    return this;
   }
 
-  public static getPageTitle() {
-    return AppConfig.getInstance().pageTitle;
+  build(): HTMLElement {
+    return this.element;
   }
 }
