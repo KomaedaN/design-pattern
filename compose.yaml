@@ -1,12 +1,7 @@
 services:
-  node:
+  app:
     container_name: design-pattern
-    image: node:26.5.0-alpine3.24
-    user: node
-    working_dir: /home/node
-    tty: true
-    stdin_open: true
+    build: .
     ports:
-      - 5173:5173
-    volumes:
-      - .:/home/node
+      - 12000:80
+    restart: unless-stopped

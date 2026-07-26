@@ -1,14 +1,15 @@
 import { Component } from "./component";
 import { Observable } from "../core/observer";
 import { TagFactory } from "../core/factory";
-
-type Pokemon = { id: number; name: string; sprite: string };
+import type { Pokemon } from "../types";
 
 export class PokemonCounter extends Component {
+  private pokemonList: Observable<Pokemon[]>;
   private count = 0;
 
-  constructor(private pokemonList: Observable<Pokemon[]>) {
+  constructor(pokemonList: Observable<Pokemon[]>) {
     super();
+    this.pokemonList = pokemonList;
   }
 
   render(): HTMLElement {

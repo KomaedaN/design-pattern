@@ -35,7 +35,7 @@ export abstract class Component {
     observable: Observable<T>,
     callback: (value: T) => void,
   ): void {
-    this.subscriptions.push(observable.subscribe(callback));
+    this.subscriptions.push(observable.subscribe(callback, true));
   }
 
   onMount(): void {}
