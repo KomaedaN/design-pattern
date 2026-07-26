@@ -16,6 +16,66 @@ body {
   padding: 2rem;
 }
 
+.app-title {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #e63946;
+}
+
+.actions-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.btn-action {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: #457b9d;
+  color: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.btn-action:hover {
+  background: #1d3557;
+}
+
+.btn-danger {
+  background: #e63946;
+}
+
+.btn-danger:hover {
+  background: #c1121f;
+}
+
+.btn-pokeapi {
+  background: #2a9d8f;
+}
+
+.btn-pokeapi:hover {
+  background: #21867a;
+}
+
+.btn-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-favoris {
+  background: #6d6875;
+}
+
+.btn-favoris:hover {
+  background: #4a4453;
+}
+
+.btn-favoris.active {
+  background: #e63946;
+}
+
 .pokemon-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -32,28 +92,35 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
+  transition: transform 0.2s;
+}
+
+.pokemon-card:hover {
+  transform: translateY(-4px);
 }
 
 .pokemon-card img {
   width: 96px;
   height: 96px;
+  image-rendering: pixelated;
 }
 
 .pokemon-card h2 {
-  font-size: 1rem;
+  font-size: 0.95rem;
   text-transform: capitalize;
 }
 
-.pokemon-card button {
-  padding: 0.4rem 0.8rem;
+.btn-favori {
+  background: none;
   border: none;
-  border-radius: 6px;
-  background: #e63946;
-  color: white;
+  font-size: 1.4rem;
   cursor: pointer;
-  font-size: 0.85rem;
+  padding: 0.2rem;
+  border-radius: 50%;
+  transition: transform 0.15s;
+  line-height: 1;
 }
 
-.pokemon-card button:hover {
-  background: #c1121f;
+.btn-favori:hover {
+  transform: scale(1.3);
 }
