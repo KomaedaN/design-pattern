@@ -1,15 +1,20 @@
-import { TagBuilder } from "./core/builder";
 import { TagFactory } from "./core/factory";
+import { TagBuilder } from "./core/builder";
 import { AppConfig, AppStore } from "./core/singleton";
 import { IndexedDBStorage } from "./core/strategy";
-
-type Pokemon = { id: number; name: string; sprite: string };
+import { Observable } from "./core/observer";
+import { PokemonGrid } from "./components/PokemonGrid";
+import { PokemonCounter } from "./components/PokemonCounter";
+import type { Pokemon } from "./types";
 
 AppConfig.getInstance().setAppTitle("PokeRoar");
 AppConfig.getInstance().setPageTitle("Accueil");
 
 const store = AppStore.getInstance();
 store.setStrategy(new IndexedDBStorage());
+
+const pokemonList = new Observable<Pokemon[]>([]);
+const favorisList = new Observable<number[]>([]);
 
 async function fetchFromApi(): Promise<Pokemon[]> {
   const res = await fetch("https://pokeapi.co/api/v2/pokemon?limit=494");
@@ -27,47 +32,12 @@ async function fetchFromApi(): Promise<Pokemon[]> {
 }
 
 async function toggleFavori(pokemon: Pokemon): Promise<void> {
-  const favoris = (await store.getState<number[]>("favoris")) ?? [];
-  const isFavori = favoris.includes(pokemon.id);
-  const updated = isFavori
+  const favoris = favorisList.getValue();
+  const updated = favoris.includes(pokemon.id)
     ? favoris.filter((id) => id !== pokemon.id)
     : [...favoris, pokemon.id];
   await store.setState("favoris", updated);
-}
-
-function buildCard(pokemon: Pokemon, favoris: number[]): HTMLElement {
-  const isFavori = favoris.includes(pokemon.id);
-
-  const heartBtn = new TagBuilder("button")
-    .withClass("btn-favori")
-    .withText(isFavori ? "❤️" : "🤍")
-    .withEvent("click", () => toggleFavori(pokemon))
-    .build();
-
-  return new TagBuilder("div")
-    .withClass("pokemon-card")
-    .withChild(
-      TagFactory.create("img", {
-        attrs: { src: pokemon.sprite, alt: pokemon.name },
-      }),
-    )
-    .withChild(TagFactory.create("h2", { text: pokemon.name }))
-    .withChild(heartBtn)
-    .build();
-}
-
-let showFavorisOnly = false;
-
-function renderGrid(
-  pokemons: Pokemon[],
-  favoris: number[],
-  grid: HTMLElement,
-): void {
-  grid.innerHTML = "";
-  const list = showFavorisOnly
-    ? pokemons.filter((p) => favoris.includes(p.id))
-    : pokemons;
-  list.forEach((pokemon) => grid.appendChild(buildCard(pokemon, favoris)));
+  favorisList.next(updated);
 }
 
 export async function initApp(root: HTMLElement): Promise<void> {
@@ -76,29 +46,23 @@ export async function initApp(root: HTMLElement): Promise<void> {
     classes: ["app-title"],
   });
 
-  const grid = TagFactory.create("div", { classes: ["pokemon-grid"] });
-
-  async function refresh(): Promise<void> {
-    const pokemons = (await store.getState<Pokemon[]>("pokemons")) ?? [];
-    const favoris = (await store.getState<number[]>("favoris")) ?? [];
-    renderGrid(pokemons, favoris, grid);
-  }
-
-  store.subscribe<Pokemon[]>("pokemons", () => refresh());
-  store.subscribe<number[]>("favoris", () => refresh());
+  let showFavorisOnly = false;
 
   const btnFavorisOnly = new TagBuilder("button")
     .withClass("btn-action")
     .withClass("btn-favoris")
     .withText("❤️ Voir mes favoris")
-    .withEvent("click", async (e) => {
+    .withEvent("click", () => {
       showFavorisOnly = !showFavorisOnly;
-      const btn = e.currentTarget as HTMLElement;
-      btn.textContent = showFavorisOnly
+      btnFavorisOnly.textContent = showFavorisOnly
         ? "🌍 Voir tous"
         : "❤️ Voir mes favoris";
-      btn.classList.toggle("active", showFavorisOnly);
-      await refresh();
+      btnFavorisOnly.classList.toggle("active", showFavorisOnly);
+      const all = pokemonList.getValue();
+      const favoris = favorisList.getValue();
+      pokemonList.next(
+        showFavorisOnly ? all.filter((p) => favoris.includes(p.id)) : all,
+      );
     })
     .build();
 
@@ -107,18 +71,24 @@ export async function initApp(root: HTMLElement): Promise<void> {
     children: [btnFavorisOnly],
   });
 
+  const counter = new PokemonCounter(pokemonList);
+  const grid = new PokemonGrid(pokemonList, favorisList, toggleFavori);
+
+  counter.mount(root);
   root.appendChild(header);
   root.appendChild(actions);
-  root.appendChild(grid);
+  grid.mount(root);
 
   const existingPokemons = await store.getState<Pokemon[]>("pokemons");
+  const existingFavoris = (await store.getState<number[]>("favoris")) ?? [];
+
+  favorisList.next(existingFavoris);
+
   if (!existingPokemons || existingPokemons.length < 200) {
     const pokemons = await fetchFromApi();
     await store.setState("pokemons", pokemons);
+    pokemonList.next(pokemons);
   } else {
-    await store.setState("pokemons", existingPokemons);
+    pokemonList.next(existingPokemons);
   }
-
-  const existingFavoris = await store.getState<number[]>("favoris");
-  await store.setState("favoris", existingFavoris ?? []);
 }

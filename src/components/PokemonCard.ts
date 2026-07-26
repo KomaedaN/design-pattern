@@ -1,15 +1,26 @@
 import { Component } from "./component";
 import { TagBuilder } from "../core/builder";
 import { TagFactory } from "../core/factory";
-
-type Pokemon = { id: number; name: string; sprite: string };
+import type { Pokemon } from "../types";
 
 export class PokemonCard extends Component {
-  constructor(private pokemon: Pokemon) {
+  constructor(
+    private pokemon: Pokemon,
+    private favoris: number[],
+    private onToggleFavori: (pokemon: Pokemon) => Promise<void>,
+  ) {
     super();
   }
 
   render(): HTMLElement {
+    const isFavori = this.favoris.includes(this.pokemon.id);
+
+    const heartBtn = new TagBuilder("button")
+      .withClass("btn-favori")
+      .withText(isFavori ? "❤️" : "🤍")
+      .withEvent("click", () => this.onToggleFavori(this.pokemon))
+      .build();
+
     return new TagBuilder("div")
       .withClass("pokemon-card")
       .withChild(
@@ -18,13 +29,7 @@ export class PokemonCard extends Component {
         }),
       )
       .withChild(TagFactory.create("h2", { text: this.pokemon.name }))
-      .withChild(
-        TagFactory.create("button", {
-          text: "Voir détail",
-          classes: ["btn-detail"],
-          events: { click: () => alert(`Pokémon : ${this.pokemon.name}`) },
-        }),
-      )
+      .withChild(heartBtn)
       .build();
   }
 
