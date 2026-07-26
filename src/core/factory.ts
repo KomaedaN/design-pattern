@@ -81,16 +81,16 @@ class HeadingTag implements Tag {
 
 export class TagFactory {
   private static registry: Record<ElementType, (config: TagConfig) => Tag> = {
-    button: (c) => new ButtonTag(c),
-    div: (c) => new DivTag(c),
-    img: (c) => new ImageTag(c),
-    input: (c) => new InputTag(c),
-    h1: (c) => new HeadingTag(c, 1),
-    h2: (c) => new HeadingTag(c, 2),
-    h3: (c) => new HeadingTag(c, 3),
-    span: (c) => new SpanTag(c),
-    p: (c) => new ParagraphTag(c),
-    a: (c) => new AnchorTag(c),
+    button: (config) => new ButtonTag(config),
+    div: (config) => new DivTag(config),
+    img: (config) => new ImageTag(config),
+    input: (config) => new InputTag(config),
+    h1: (config) => new HeadingTag(config, 1),
+    h2: (config) => new HeadingTag(config, 2),
+    h3: (config) => new HeadingTag(config, 3),
+    span: (config) => new SpanTag(config),
+    p: (config) => new ParagraphTag(config),
+    a: (config) => new AnchorTag(config),
   };
 
   static create(type: ElementType, config: TagConfig = {}): HTMLElement {

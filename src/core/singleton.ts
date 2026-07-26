@@ -13,7 +13,7 @@
       return AppConfig.instance;
     }
 
-    AppConfig.instance = new AppConfig("League Of Legends", "Home Page");
+    AppConfig.instance = new AppConfig("PokeRoar", "Home Page");
     return AppConfig.instance;
   }
 
