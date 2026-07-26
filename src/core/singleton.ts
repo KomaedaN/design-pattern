@@ -1,35 +1,75 @@
-﻿export class AppConfig {
+import { Observable } from "./observer";
+import { type StorageStrategy, VolatileStorage } from "./strategy";
+
+export class AppConfig {
   private static instance?: AppConfig;
   private appTitle: string;
   private pageTitle: string;
 
-  private constructor(appTitle: string, pageTitle: string) {
-    this.appTitle = appTitle;
-    this.pageTitle = pageTitle;
+  private constructor() {
+    this.appTitle = "PokeRoar";
+    this.pageTitle = "Home Page";
   }
 
-  private static getInstance(): AppConfig {
-    if (AppConfig.instance) {
-      return AppConfig.instance;
+  static getInstance(): AppConfig {
+    if (!AppConfig.instance) {
+      AppConfig.instance = new AppConfig();
     }
-
-    AppConfig.instance = new AppConfig("PokeRoar", "Home Page");
     return AppConfig.instance;
   }
 
-  public static setAppTitle(title: string): void {
-    AppConfig.getInstance().appTitle = title;
+  setAppTitle(title: string): void {
+    this.appTitle = title;
   }
 
-  public static setPageTitle(title: string): void {
-    AppConfig.getInstance().pageTitle = title;
+  setPageTitle(title: string): void {
+    this.pageTitle = title;
   }
 
-  public static getAppTitle() {
-    return AppConfig.getInstance().appTitle;
+  getAppTitle(): string {
+    return this.appTitle;
   }
 
-  public static getPageTitle() {
-    return AppConfig.getInstance().pageTitle;
+  getPageTitle(): string {
+    return this.pageTitle;
+  }
+}
+
+export class AppStore {
+  private static instance?: AppStore;
+  private state: Record<string, Observable<unknown>> = {};
+  private strategy: StorageStrategy = new VolatileStorage();
+
+  private constructor() {}
+
+  static getInstance(): AppStore {
+    if (!AppStore.instance) {
+      AppStore.instance = new AppStore();
+    }
+    return AppStore.instance;
+  }
+
+  setStrategy(strategy: StorageStrategy): void {
+    this.strategy = strategy;
+  }
+
+  async setState<T>(key: string, value: T): Promise<void> {
+    await this.strategy.set(key, value);
+    if (!this.state[key]) {
+      this.state[key] = new Observable<unknown>(value);
+    } else {
+      this.state[key].next(value);
+    }
+  }
+
+  async getState<T>(key: string): Promise<T | undefined> {
+    return this.strategy.get<T>(key);
+  }
+
+  subscribe<T>(key: string, callback: (value: T) => void): () => void {
+    if (!this.state[key]) {
+      this.state[key] = new Observable<unknown>(undefined);
+    }
+    return this.state[key].subscribe((value) => callback(value as T));
   }
 }
