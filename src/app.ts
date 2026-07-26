@@ -1,7 +1,12 @@
 import { TagBuilder } from "./core/builder";
 import { TagFactory } from "./core/factory";
+import { Observable } from "./core/observer";
 
-const pokemons = [
+type Pokemon = { id: number; name: string; sprite: string };
+
+const pokemonList = new Observable<Pokemon[]>([]);
+
+const INITIAL_POKEMONS: Pokemon[] = [
   {
     id: 1,
     name: "Bulbizarre",
@@ -58,56 +63,44 @@ const pokemons = [
   },
 ];
 
-export function initApp(root: HTMLElement): void {
-  const grid = TagFactory.create("div", { classes: ["pokemon-grid"] });
+function buildCard(pokemon: Pokemon): HTMLElement {
+  return new TagBuilder("div")
+    .withClass("pokemon-card")
+    .withChild(
+      TagFactory.create("img", {
+        attrs: { src: pokemon.sprite, alt: pokemon.name },
+      }),
+    )
+    .withChild(TagFactory.create("h2", { text: pokemon.name }))
+    .withChild(
+      TagFactory.create("button", {
+        text: "Voir détail",
+        classes: ["btn-detail"],
+        events: { click: () => alert(`Pokémon : ${pokemon.name}`) },
+      }),
+    )
+    .build();
+}
 
-  pokemons.forEach((pokemon) => {
-    const card = new TagBuilder("div")
-      .withClass("pokemon-card")
-      .withChild(
-        TagFactory.create("img", {
-          attrs: { src: pokemon.sprite, alt: pokemon.name },
-        }),
-      )
-      .withChild(TagFactory.create("h2", { text: pokemon.name }))
-      .withChild(
-        TagFactory.create("button", {
-          text: "Voir détail",
-          classes: ["btn-detail"],
-          events: { click: () => alert(`Pokémon : ${pokemon.name}`) },
-        }),
-      )
-      .build();
-
-    root.appendChild(card);
-  });
+function renderGrid(pokemons: Pokemon[], grid: HTMLElement): void {
+  grid.innerHTML = "";
+  pokemons.forEach((pokemon) => grid.appendChild(buildCard(pokemon)));
 }
 
 export function initApp(root: HTMLElement): void {
-  const grid = new TagBuilder("div").withClass("pokemon-grid").build();
-  const counter = new TagBuilder("p").withText("0 Pokémon chargés").build();
+  const counter = TagFactory.create("p", { text: "0 Pokémon chargés" });
+  const grid = TagFactory.create("div", { classes: ["pokemon-grid"] });
 
-  // Abonné 1 : la grille se reconstruit à chaque changement
-  pokemonList.subscribe((pokemons) => renderGrid(pokemons, grid));
-
-  // Abonné 2 : le compteur se met à jour tout seul
-  pokemonList.subscribe((pokemons) => {
-    counter.textContent = `${pokemons.length} Pokémon chargés`;
-  });
-
-  root.appendChild(counter);
-  root.appendChild(grid);
-  // Boutons de test — à supprimer après
   const btnAdd = new TagBuilder("button")
-    .withText("Ajouter Pikachu")
+    .withText("Ajouter Évaporé")
     .withEvent("click", () => {
       pokemonList.next([
         ...pokemonList.getValue(),
         {
-          id: 25,
-          name: "Pikachu",
+          id: 54,
+          name: "Évaporé",
           sprite:
-            "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png",
+            "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/54.png",
         },
       ]);
     })
@@ -118,28 +111,15 @@ export function initApp(root: HTMLElement): void {
     .withEvent("click", () => pokemonList.next([]))
     .build();
 
+  pokemonList.subscribe((pokemons) => renderGrid(pokemons, grid));
+  pokemonList.subscribe((pokemons) => {
+    counter.textContent = `${pokemons.length} Pokémon chargés`;
+  });
+
+  root.appendChild(counter);
+  root.appendChild(grid);
   root.appendChild(btnAdd);
   root.appendChild(btnReset);
 
-  // Données initiales — remplace ça par un vrai fetch plus tard
-  pokemonList.next([
-    {
-      id: 1,
-      name: "Bulbizarre",
-      sprite:
-        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png",
-    },
-    {
-      id: 4,
-      name: "Salamèche",
-      sprite:
-        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png",
-    },
-    {
-      id: 7,
-      name: "Carapuce",
-      sprite:
-        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png",
-    },
-  ]);
+  pokemonList.next(INITIAL_POKEMONS);
 }
